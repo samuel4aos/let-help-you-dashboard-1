@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useHotelStore } from '../../store/useHotelStore';
-import { LayoutDashboard, BedDouble, CalendarCheck, Users, Settings, LogOut, Menu, Bell, Search, Plus, Edit, Trash2, TrendingUp, DollarSign, Hotel } from 'lucide-react';
+import { LayoutDashboard, BedDouble, CalendarCheck, Settings, LogOut, Menu, Bell, Search, Plus, Edit, Trash2, TrendingUp, DollarSign, Hotel, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,14 +9,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import RoomDialog from '@/components/admin/RoomDialog';
 import BookingList from '@/components/admin/BookingList';
-import StaffList from '@/components/admin/StaffList';
 import HotelSettings from '@/components/admin/HotelSettings';
 import { Room } from '@/types';
 import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard: React.FC = () => {
   const { rooms, bookings, deleteRoom, setUser } = useHotelStore();
-  const [activeTab, setActiveTab] = useState<'overview' | 'rooms' | 'bookings' | 'staff' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'rooms' | 'bookings' | 'settings'>('overview');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isRoomDialogOpen, setIsRoomDialogOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
@@ -30,7 +29,7 @@ const AdminDashboard: React.FC = () => {
 
   const stats = [
     { title: 'Total Bookings', value: bookings.length + 12, icon: CalendarCheck, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { title: 'Total Revenue', value: `$${(bookings.reduce((acc, b) => acc + b.totalPrice, 0) + 12450).toLocaleString()}`, icon: DollarSign, color: 'text-green-600', bg: 'bg-green-50' },
+    { title: 'Total Revenue', value: `₦${(bookings.reduce((acc, b) => acc + b.totalPrice, 0) + 12450).toLocaleString()}`, icon: DollarSign, color: 'text-green-600', bg: 'bg-green-50' },
     { title: 'Occupancy Rate', value: '78%', icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50' },
     { title: 'Available Rooms', value: rooms.length, icon: BedDouble, color: 'text-amber-600', bg: 'bg-amber-50' },
   ];
@@ -104,11 +103,11 @@ const AdminDashboard: React.FC = () => {
             <Button variant="outline" className="w-full justify-start py-6 rounded-xl" onClick={() => setActiveTab('bookings')}>
               <Search className="mr-2 w-4 h-4" /> Manage Bookings
             </Button>
-            <Button variant="outline" className="w-full justify-start py-6 rounded-xl" onClick={() => setActiveTab('staff')}>
-              <Users className="mr-2 w-4 h-4" /> Manage Staff
-            </Button>
             <Button variant="outline" className="w-full justify-start py-6 rounded-xl" onClick={() => setActiveTab('settings')}>
               <Hotel className="mr-2 w-4 h-4" /> Hotel Settings
+            </Button>
+            <Button variant="outline" className="w-full justify-start py-6 rounded-xl" onClick={() => setActiveTab('settings')}>
+              <Shield className="mr-2 w-4 h-4" /> Change Password
             </Button>
           </CardContent>
         </Card>
@@ -141,7 +140,7 @@ const AdminDashboard: React.FC = () => {
               </div>
               <p className="text-slate-500 text-sm mb-4 line-clamp-2">{room.description}</p>
               <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                <span className="font-bold text-amber-600 text-lg">${room.price}<span className="text-slate-400 text-xs font-normal">/night</span></span>
+                <span className="font-bold text-amber-600 text-lg">₦{room.price.toLocaleString()}<span className="text-slate-400 text-xs font-normal">/night</span></span>
                 <div className="flex gap-2">
                   <Button 
                     variant="ghost" 
@@ -188,7 +187,6 @@ const AdminDashboard: React.FC = () => {
               { id: 'overview', icon: LayoutDashboard, label: 'Overview' },
               { id: 'rooms', icon: BedDouble, label: 'Room Management' },
               { id: 'bookings', icon: CalendarCheck, label: 'Bookings' },
-              { id: 'staff', icon: Users, label: 'Staff' },
               { id: 'settings', icon: Settings, label: 'Settings' },
             ].map((item) => (
               <button
@@ -221,7 +219,7 @@ const AdminDashboard: React.FC = () => {
             </Button>
             <div>
               <p className="text-xs font-bold text-amber-600 uppercase tracking-widest">Admin Dashboard</p>
-              <h2 className="text-2xl font-bold capitalize text-slate-800">{activeTab === 'overview' ? 'Welcome Back, Admin' : activeTab}</h2>
+              <h2 className="text-2xl font-bold capitalize text-slate-800">{activeTab === 'overview' ? 'Welcome Back, Admin' : activeTab === 'settings' ? 'Management Suite' : activeTab}</h2>
             </div>
           </div>
           <div className="flex items-center gap-6">
@@ -246,7 +244,6 @@ const AdminDashboard: React.FC = () => {
           {activeTab === 'overview' && renderOverview()}
           {activeTab === 'rooms' && renderRooms()}
           {activeTab === 'bookings' && <BookingList />}
-          {activeTab === 'staff' && <StaffList />}
           {activeTab === 'settings' && <HotelSettings />}
         </div>
       </main>

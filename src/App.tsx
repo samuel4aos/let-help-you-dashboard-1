@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useHotelStore } from './store/useHotelStore';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Hotel, Menu, X, Instagram, Facebook, Twitter, Mail, Phone, MapPin, User as UserIcon, LogOut, ChevronRight } from 'lucide-react';
+import { Hotel, Menu, X, Instagram, Facebook, Twitter, Mail, Phone, MapPin, LogOut, ChevronRight } from 'lucide-react';
 import Home from './pages/guest/Home';
 import Rooms from './pages/guest/Rooms';
 import MyBookings from './pages/guest/MyBookings';
@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from './lib/supabase';
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
   const { user, setUser } = useHotelStore();
   const location = useLocation();
   const navigate = useNavigate();
@@ -22,7 +22,10 @@ const Navbar = () => {
   if (isAdminPage) return null;
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    // If it's a Supabase session, sign out
+    if (user?.role !== 'admin') {
+        await supabase.auth.signOut();
+    }
     setUser(null);
     toast.success("Logged out successfully");
     navigate('/');

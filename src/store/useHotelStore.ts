@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User, Room, Booking, HotelInfo, Staff } from '../types';
+import { User, Room, Booking, HotelInfo } from '../types';
 import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 
@@ -7,7 +7,6 @@ interface HotelState {
   user: User | null;
   rooms: Room[];
   bookings: Booking[];
-  staff: Staff[];
   hotelInfo: HotelInfo;
   isLoading: boolean;
   setUser: (user: User | null) => void;
@@ -18,9 +17,6 @@ interface HotelState {
   addBooking: (booking: Booking) => Promise<void>;
   updateBooking: (id: string, booking: Partial<Booking>) => Promise<void>;
   deleteBooking: (id: string) => Promise<void>;
-  addStaff: (staff: Staff) => Promise<void>;
-  updateStaff: (id: string, staff: Partial<Staff>) => Promise<void>;
-  deleteStaff: (id: string) => Promise<void>;
   updateHotelInfo: (info: Partial<HotelInfo>) => Promise<void>;
 }
 
@@ -65,7 +61,6 @@ export const useHotelStore = create<HotelState>((set, get) => ({
   user: null,
   rooms: [],
   bookings: [],
-  staff: [],
   isLoading: false,
   hotelInfo: {
     name: 'The Grand Regency',
@@ -75,6 +70,7 @@ export const useHotelStore = create<HotelState>((set, get) => ({
     email: 'concierge@regency.com',
     images: [],
     policies: ['No smoking in rooms', 'Check-in: 2:00 PM', 'Check-out: 12:00 PM'],
+    adminPassword: 'admin123',
     heroTitle: 'Redefining Elegance',
     heroSubtitle: 'An oasis of refined luxury, where impeccable service meets architectural brilliance.',
     heroImage: 'https://storage.googleapis.com/dala-prod-public-storage/generated-images/87fdac91-6420-4b2c-9c11-c405f851854e/hotel-lobby-6673bcb5-1776794071145.webp',
@@ -198,25 +194,9 @@ export const useHotelStore = create<HotelState>((set, get) => ({
     }
   },
 
-  addStaff: async (staff) => {
-    set((state) => ({ staff: [...state.staff, staff] }));
-  },
-
-  updateStaff: async (id, updatedStaff) => {
-    set((state) => ({
-      staff: state.staff.map((s) => (s.id === id ? { ...s, ...updatedStaff } : s)),
-    }));
-  },
-
-  deleteStaff: async (id) => {
-    set((state) => ({
-      staff: state.staff.filter((s) => s.id !== id),
-    }));
-  },
-
   updateHotelInfo: async (info) => {
     const currentInfo = get().hotelInfo;
-    const hotelId = (currentInfo as any).id;
+    const hotelId = currentInfo.id;
     
     let targetId = hotelId;
     if (!targetId) {

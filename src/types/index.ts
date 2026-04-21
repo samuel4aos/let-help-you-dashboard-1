@@ -1,4 +1,4 @@
-export type UserRole = 'guest' | 'admin' | 'staff';
+export type UserRole = 'guest' | 'admin';
 
 export interface User {
   id: string;
@@ -38,14 +38,6 @@ export interface Booking {
   roomName?: string;
 }
 
-export interface Staff {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-  status: 'active' | 'inactive';
-}
-
 export interface ExperienceItem {
   icon: string;
   title: string;
@@ -61,7 +53,8 @@ export interface HotelInfo {
   email: string;
   images: string[];
   policies: string[];
-  // New Front Page Fields
+  adminPassword?: string;
+  // Front Page Fields
   heroTitle: string;
   heroSubtitle: string;
   heroImage: string;

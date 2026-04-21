@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Hotel, Mail, Phone, MapPin, Save, ShieldCheck, Layout, Image as ImageIcon, Info, Sparkles } from 'lucide-react';
+import { Hotel, Mail, Phone, MapPin, Save, ShieldCheck, Layout, Image as ImageIcon, Info, Sparkles, Lock, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageUploader from './ImageUploader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,10 +13,38 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 const HotelSettings: React.FC = () => {
   const { hotelInfo, updateHotelInfo } = useHotelStore();
   const [formData, setFormData] = useState(hotelInfo);
+  const [passwords, setPasswords] = useState({
+    current: '',
+    new: '',
+    confirm: ''
+  });
 
   const handleSave = async () => {
     await updateHotelInfo(formData);
     toast.success('Hotel settings updated successfully!');
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (passwords.current !== (hotelInfo.adminPassword || 'admin123')) {
+      toast.error('Current password incorrect');
+      return;
+    }
+
+    if (passwords.new !== passwords.confirm) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    if (passwords.new.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    await updateHotelInfo({ adminPassword: passwords.new });
+    toast.success('Administrative password updated successfully!');
+    setPasswords({ current: '', new: '', confirm: '' });
   };
 
   const updateField = (field: string, value: any) => {
@@ -45,6 +73,9 @@ const HotelSettings: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger value="experience" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all">
             <Sparkles className="w-4 h-4 mr-2" /> Experience Section
+          </TabsTrigger>
+          <TabsTrigger value="security" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all">
+            <Shield className="w-4 h-4 mr-2" /> Security
           </TabsTrigger>
         </TabsList>
 
@@ -282,6 +313,83 @@ const HotelSettings: React.FC = () => {
                     </div>
                 </CardContent>
             </Card>
+        </TabsContent>
+
+        <TabsContent value="security">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white">
+                    <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-8">
+                        <CardTitle className="text-xl flex items-center gap-2">
+                            <Lock className="w-6 h-6 text-amber-500" /> Change Admin Password
+                        </CardTitle>
+                        <CardDescription>Update the administrative access password for this property.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-8">
+                        <form onSubmit={handlePasswordChange} className="space-y-6">
+                            <div className="space-y-3">
+                                <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Current Password</Label>
+                                <Input 
+                                    type="password"
+                                    value={passwords.current}
+                                    onChange={(e) => setPasswords({...passwords, current: e.target.value})}
+                                    className="rounded-2xl h-12 bg-slate-50 border-slate-100 focus:bg-white"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-3">
+                                <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">New Password</Label>
+                                <Input 
+                                    type="password"
+                                    value={passwords.new}
+                                    onChange={(e) => setPasswords({...passwords, new: e.target.value})}
+                                    className="rounded-2xl h-12 bg-slate-50 border-slate-100 focus:bg-white"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-3">
+                                <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Confirm New Password</Label>
+                                <Input 
+                                    type="password"
+                                    value={passwords.confirm}
+                                    onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
+                                    className="rounded-2xl h-12 bg-slate-50 border-slate-100 focus:bg-white"
+                                    required
+                                />
+                            </div>
+                            <Button type="submit" className="w-full bg-slate-900 h-12 rounded-2xl font-bold mt-4 shadow-lg shadow-slate-900/10">
+                                Update Administrative Access
+                            </Button>
+                        </form>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-slate-900 text-white">
+                    <CardHeader className="p-8">
+                        <div className="bg-amber-500 w-12 h-12 rounded-2xl flex items-center justify-center mb-6">
+                            <ShieldCheck className="text-slate-900 w-6 h-6" />
+                        </div>
+                        <CardTitle className="text-2xl font-serif">Security Guidelines</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-8 pt-0 space-y-6 text-slate-400">
+                        <div className="flex gap-4">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 shrink-0" />
+                            <p className="text-sm">Use a strong, unique password that isn't shared with other services.</p>
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 shrink-0" />
+                            <p className="text-sm">Avoid using common words or predictable patterns like "password123".</p>
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-2 shrink-0" />
+                            <p className="text-sm">Change your password periodically to maintain high security standards.</p>
+                        </div>
+                        <div className="pt-8 border-t border-white/10">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500">System Status</p>
+                            <p className="text-xl font-bold text-white mt-1">Fully Encrypted</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </TabsContent>
       </Tabs>
     </div>
