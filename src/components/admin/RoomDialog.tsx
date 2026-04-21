@@ -93,7 +93,7 @@ const RoomDialog: React.FC<RoomDialogProps> = ({ room, isOpen, onClose }) => {
 
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Price per Night ($)</Label>
+              <Label className="text-xs font-bold uppercase tracking-widest text-slate-400">Price per Night (₦)</Label>
               <Input 
                 type="number" 
                 value={formData.price} 

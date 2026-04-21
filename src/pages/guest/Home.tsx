@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useHotelStore } from '../../store/useHotelStore';
 import { Calendar, Users, Star, ArrowRight, ShieldCheck, CreditCard, Sparkles, MapPin } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,7 +10,7 @@ import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
 const Home: React.FC = () => {
-  const { rooms } = useHotelStore();
+  const { rooms, hotelInfo } = useHotelStore();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useState({
     checkIn: new Date(),
@@ -21,13 +22,19 @@ const Home: React.FC = () => {
     navigate(`/rooms?checkIn=${format(searchParams.checkIn, 'yyyy-MM-dd')}&checkOut=${format(searchParams.checkOut, 'yyyy-MM-dd')}&guests=${searchParams.guests}`);
   };
 
+  // Helper to render dynamic icons
+  const DynamicIcon = ({ name, className }: { name: string; className?: string }) => {
+    const Icon = (LucideIcons as any)[name] || LucideIcons.HelpCircle;
+    return <Icon className={className} />;
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
       {/* Hero Section */}
       <section className="relative h-[95vh] w-full flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://storage.googleapis.com/dala-prod-public-storage/generated-images/87fdac91-6420-4b2c-9c11-c405f851854e/hotel-lobby-6673bcb5-1776794071145.webp"
+            src={hotelInfo.heroImage || "https://storage.googleapis.com/dala-prod-public-storage/generated-images/87fdac91-6420-4b2c-9c11-c405f851854e/hotel-lobby-6673bcb5-1776794071145.webp"}
             alt="Hero"
             className="w-full h-full object-cover brightness-[0.4] scale-105 animate-subtle-zoom"
           />
@@ -39,13 +46,17 @@ const Home: React.FC = () => {
             transition={{ duration: 1, ease: "easeOut" }}
           >
             <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/50 backdrop-blur-md mb-6 px-4 py-1.5 rounded-full text-sm font-bold tracking-widest uppercase">
-              Exquisite Urban Living
+              {hotelInfo.description || "Exquisite Urban Living"}
             </Badge>
             <h1 className="text-6xl md:text-8xl font-serif mb-8 leading-[1.1]">
-              Redefining <span className="text-amber-400 italic">Elegance</span>
+              {hotelInfo.heroTitle.split(' ').map((word, i) => 
+                word.toLowerCase() === 'elegance' || word.toLowerCase() === 'hospitality' ? 
+                <span key={i} className="text-amber-400 italic">{word} </span> : 
+                word + ' '
+              )}
             </h1>
             <p className="text-xl md:text-2xl font-light mb-12 text-slate-200 max-w-3xl mx-auto leading-relaxed">
-              An oasis of refined luxury, where impeccable service meets architectural brilliance in the heart of Victoria Island.
+              {hotelInfo.heroSubtitle}
             </p>
           </motion.div>
 
@@ -94,9 +105,9 @@ const Home: React.FC = () => {
       <section className="py-32 px-4 max-w-7xl mx-auto w-full">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
           <div className="max-w-2xl">
-            <Badge className="bg-amber-100 text-amber-700 border-none mb-4 font-bold">Curated Collection</Badge>
+            <Badge className="bg-amber-100 text-amber-700 border-none mb-4 font-bold">{hotelInfo.lowerSectionTitle}</Badge>
             <h2 className="text-5xl md:text-6xl font-serif text-slate-900 mb-6">Signature Residences</h2>
-            <p className="text-slate-500 text-xl leading-relaxed">Handpicked suites designed for the most discerning travelers, featuring bespoke Italian furniture and panoramic city views.</p>
+            <p className="text-slate-500 text-xl leading-relaxed">{hotelInfo.lowerSectionContent}</p>
           </div>
           <Button onClick={() => navigate('/rooms')} variant="ghost" className="text-amber-600 hover:text-amber-700 font-bold text-lg group h-14 px-8 rounded-2xl">
             View All Suites <ArrowRight className="ml-3 w-5 h-5 transition-transform group-hover:translate-x-2" />
@@ -124,7 +135,7 @@ const Home: React.FC = () => {
                   />
                   <div className="absolute top-6 right-6">
                     <Badge className="bg-white/95 text-slate-900 backdrop-blur-md border-none font-bold px-5 py-2.5 rounded-2xl text-lg shadow-xl">
-                      ${room.price}
+                      ₦{room.price.toLocaleString()}
                     </Badge>
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-slate-900/80 to-transparent">
@@ -158,7 +169,7 @@ const Home: React.FC = () => {
           <div className="relative order-2 lg:order-1">
             <div className="relative z-10 rounded-[3rem] overflow-hidden border-[12px] border-slate-800 shadow-3xl">
               <img
-                src="https://storage.googleapis.com/dala-prod-public-storage/generated-images/87fdac91-6420-4b2c-9c11-c405f851854e/rooftop-pool-0c141681-1776794070496.webp"
+                src={hotelInfo.experienceImage || "https://storage.googleapis.com/dala-prod-public-storage/generated-images/87fdac91-6420-4b2c-9c11-c405f851854e/rooftop-pool-0c141681-1776794070496.webp"}
                 alt="Experience"
                 className="w-full aspect-square object-cover"
               />
@@ -171,21 +182,20 @@ const Home: React.FC = () => {
           <div className="space-y-10 order-1 lg:order-2">
             <Badge className="bg-amber-500 text-slate-900 font-bold px-4 py-1.5 rounded-full border-none">Beyond Stays</Badge>
             <h2 className="text-5xl md:text-6xl font-serif leading-[1.15]">
-              The Art of Modern <span className="text-amber-400">Hospitality</span>
+              {hotelInfo.aboutTitle.split(' ').map((word, i) => 
+                word.toLowerCase() === 'hospitality' || word.toLowerCase() === 'elegance' ? 
+                <span key={i} className="text-amber-400">{word} </span> : 
+                word + ' '
+              )}
             </h2>
             <p className="text-slate-400 text-xl leading-relaxed">
-              At Regency, we believe luxury is in the details. From our curated art collection to our personalized concierge service, every moment is crafted to perfection.
+              {hotelInfo.aboutDescription}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              {[
-                { icon: ShieldCheck, title: 'Total Privacy', desc: 'Secure, private access and soundproofed walls.' },
-                { icon: MapPin, title: 'Premium Spot', desc: 'Located in the most prestigious district of Lagos.' },
-                { icon: Sparkles, title: 'Bespoke Care', desc: 'Personal butler service available 24/7.' },
-                { icon: CreditCard, title: 'Elite Rewards', desc: 'Join our club for exclusive perks and upgrades.' },
-              ].map((item, i) => (
-                <div key={i} className="flex gap-5 items-start">
+              {hotelInfo.experienceItems.map((item, i) => (
+                <div key={i} className="flex gap-5 items-start group">
                   <div className="p-4 bg-white/5 rounded-2xl border border-white/10 shrink-0 group-hover:bg-amber-500/10 transition-colors">
-                    <item.icon className="w-6 h-6 text-amber-400" />
+                    <DynamicIcon name={item.icon} className="w-6 h-6 text-amber-400" />
                   </div>
                   <div>
                     <h4 className="font-bold text-xl mb-1">{item.title}</h4>

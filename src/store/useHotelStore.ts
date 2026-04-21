@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { User, Room, Booking, HotelInfo, Staff } from '../types';
 import { supabase } from '../lib/supabase';
+import { toast } from 'sonner';
 
 interface HotelState {
   user: User | null;
@@ -23,6 +24,43 @@ interface HotelState {
   updateHotelInfo: (info: Partial<HotelInfo>) => Promise<void>;
 }
 
+// Helper to map DB booking to Frontend booking
+const mapBookingFromDB = (b: any): Booking => ({
+  id: b.id,
+  roomId: b.room_id,
+  guestName: b.guest_name,
+  guestEmail: b.guest_email,
+  guestPhone: b.guest_phone || '',
+  fullName: b.full_name || '',
+  occupation: b.occupation || '',
+  expectedArrivalTime: b.expected_arrival_time || '',
+  checkIn: b.check_in,
+  checkOut: b.check_out,
+  totalPrice: Number(b.total_price),
+  status: b.status,
+  paymentStatus: b.payment_status,
+  createdAt: b.created_at,
+  roomName: b.rooms?.name || b.roomName,
+});
+
+// Helper to map Frontend booking to DB booking
+const mapBookingToDB = (b: Partial<Booking>) => {
+  const mapped: any = {};
+  if (b.roomId) mapped.room_id = b.roomId;
+  if (b.guestName) mapped.guest_name = b.guestName;
+  if (b.guestEmail) mapped.guest_email = b.guestEmail;
+  if (b.guestPhone !== undefined) mapped.guest_phone = b.guestPhone;
+  if (b.fullName !== undefined) mapped.full_name = b.fullName;
+  if (b.occupation !== undefined) mapped.occupation = b.occupation;
+  if (b.expectedArrivalTime !== undefined) mapped.expected_arrival_time = b.expectedArrivalTime;
+  if (b.checkIn) mapped.check_in = b.checkIn;
+  if (b.checkOut) mapped.check_out = b.checkOut;
+  if (b.totalPrice !== undefined) mapped.total_price = b.totalPrice;
+  if (b.status) mapped.status = b.status;
+  if (b.paymentStatus) mapped.payment_status = b.paymentStatus;
+  return mapped;
+};
+
 export const useHotelStore = create<HotelState>((set, get) => ({
   user: null,
   rooms: [],
@@ -31,12 +69,26 @@ export const useHotelStore = create<HotelState>((set, get) => ({
   isLoading: false,
   hotelInfo: {
     name: 'The Grand Regency',
-    description: '',
-    address: '',
-    phone: '',
-    email: '',
+    description: 'Exquisite urban living in the heart of the city.',
+    address: '123 Luxury Ave, Victoria Island, Lagos, Nigeria',
+    phone: '+234 800 REGENCY',
+    email: 'concierge@regency.com',
     images: [],
-    policies: [],
+    policies: ['No smoking in rooms', 'Check-in: 2:00 PM', 'Check-out: 12:00 PM'],
+    heroTitle: 'Redefining Elegance',
+    heroSubtitle: 'An oasis of refined luxury, where impeccable service meets architectural brilliance.',
+    heroImage: 'https://storage.googleapis.com/dala-prod-public-storage/generated-images/87fdac91-6420-4b2c-9c11-c405f851854e/hotel-lobby-6673bcb5-1776794071145.webp',
+    aboutTitle: 'The Art of Modern Hospitality',
+    aboutDescription: 'At Regency, we believe luxury is in the details. From our curated art collection to our personalized concierge service, every moment is crafted to perfection.',
+    experienceImage: 'https://storage.googleapis.com/dala-prod-public-storage/generated-images/87fdac91-6420-4b2c-9c11-c405f851854e/rooftop-pool-0c141681-1776794070496.webp',
+    experienceItems: [
+        { icon: 'ShieldCheck', title: 'Total Privacy', desc: 'Secure, private access and soundproofed walls.' },
+        { icon: 'MapPin', title: 'Premium Spot', desc: 'Located in the most prestigious district of Lagos.' },
+        { icon: 'Sparkles', title: 'Bespoke Care', desc: 'Personal butler service available 24/7.' },
+        { icon: 'CreditCard', title: 'Elite Rewards', desc: 'Join our club for exclusive perks and upgrades.' },
+    ],
+    lowerSectionTitle: 'Curated Collection',
+    lowerSectionContent: 'Handpicked suites designed for the most discerning travelers, featuring bespoke Italian furniture and panoramic city views.',
   },
 
   setUser: (user) => set({ user }),
@@ -44,17 +96,15 @@ export const useHotelStore = create<HotelState>((set, get) => ({
   fetchInitialData: async () => {
     set({ isLoading: true });
     try {
-      // Fetch Hotel Info
       const { data: hotelData } = await supabase
         .from('hotels')
         .select('*')
         .single();
       
       if (hotelData) {
-        set({ hotelInfo: hotelData });
+        set({ hotelInfo: { ...get().hotelInfo, ...hotelData } });
       }
 
-      // Fetch Rooms
       const { data: roomsData } = await supabase
         .from('rooms')
         .select('*');
@@ -63,8 +113,9 @@ export const useHotelStore = create<HotelState>((set, get) => ({
         set({ rooms: roomsData });
       }
 
-      // Fetch Bookings (if user is logged in)
       const { data: { session } } = await supabase.auth.getSession();
+      let query = supabase.from('bookings').select('*, rooms(name)');
+      
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -74,19 +125,13 @@ export const useHotelStore = create<HotelState>((set, get) => ({
         
         if (profile) {
           set({ user: profile });
-          
-          const { data: bookingsData } = await supabase
-            .from('bookings')
-            .select('*, rooms(name)')
-            .eq('user_id', session.user.id);
-          
-          if (bookingsData) {
-            set({ bookings: bookingsData.map(b => ({
-              ...b,
-              roomName: b.rooms?.name
-            })) });
-          }
+          query = query.eq('guest_email', profile.email);
         }
+      }
+
+      const { data: bookingsData } = await query;
+      if (bookingsData) {
+        set({ bookings: bookingsData.map(mapBookingFromDB) });
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -121,18 +166,26 @@ export const useHotelStore = create<HotelState>((set, get) => ({
   },
 
   addBooking: async (booking) => {
-    const { data, error } = await supabase.from('bookings').insert([booking]).select().single();
+    const dbBooking = mapBookingToDB(booking);
+    const { data, error } = await supabase.from('bookings').insert([dbBooking]).select('*, rooms(name)').single();
     if (!error && data) {
-      set((state) => ({ bookings: [data, ...state.bookings] }));
+      set((state) => ({ bookings: [mapBookingFromDB(data), ...state.bookings] }));
+    } else if (error) {
+      console.error('Error adding booking:', error);
+      throw error;
     }
   },
 
   updateBooking: async (id, updatedBooking) => {
-    const { error } = await supabase.from('bookings').update(updatedBooking).eq('id', id);
+    const dbBooking = mapBookingToDB(updatedBooking);
+    const { error } = await supabase.from('bookings').update(dbBooking).eq('id', id);
     if (!error) {
       set((state) => ({
         bookings: state.bookings.map((b) => (b.id === id ? { ...b, ...updatedBooking } : b)),
       }));
+    } else {
+        console.error('Error updating booking:', error);
+        throw error;
     }
   },
 
@@ -146,7 +199,6 @@ export const useHotelStore = create<HotelState>((set, get) => ({
   },
 
   addStaff: async (staff) => {
-    // Note: Staff management involves creating auth users, which usually happens via edge functions
     set((state) => ({ staff: [...state.staff, staff] }));
   },
 
@@ -163,11 +215,26 @@ export const useHotelStore = create<HotelState>((set, get) => ({
   },
 
   updateHotelInfo: async (info) => {
-    const { error } = await supabase.from('hotels').update(info).eq('id', (get().hotelInfo as any).id);
-    if (!error) {
-      set((state) => ({
-        hotelInfo: { ...state.hotelInfo, ...info },
-      }));
+    const currentInfo = get().hotelInfo;
+    const hotelId = (currentInfo as any).id;
+    
+    let targetId = hotelId;
+    if (!targetId) {
+      const { data } = await supabase.from('hotels').select('id').single();
+      if (data) targetId = data.id;
     }
+
+    if (targetId) {
+      const { error } = await supabase.from('hotels').update(info).eq('id', targetId);
+      if (error) {
+        console.error('Error updating hotel info:', error);
+        toast.error('Failed to save changes to database');
+        return;
+      }
+    }
+
+    set((state) => ({
+      hotelInfo: { ...state.hotelInfo, ...info },
+    }));
   },
 }));

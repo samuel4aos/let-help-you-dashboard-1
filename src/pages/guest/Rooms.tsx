@@ -14,7 +14,7 @@ import { Room } from '@/types';
 
 const Rooms: React.FC = () => {
   const { rooms } = useHotelStore();
-  const [priceRange, setPriceRange] = useState([0, 1500]);
+  const [priceRange, setPriceRange] = useState([0, 500000]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [bookingRoom, setBookingRoom] = useState<Room | null>(null);
@@ -63,16 +63,16 @@ const Rooms: React.FC = () => {
                   <div className="space-y-6">
                     <Label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Price Range</Label>
                     <Slider
-                      defaultValue={[0, 1500]}
-                      max={1500}
-                      step={100}
+                      defaultValue={[0, 500000]}
+                      max={1000000}
+                      step={10000}
                       value={[0, priceRange[1]]}
                       onValueChange={(val) => setPriceRange([0, val[0]])}
                       className="mt-4"
                     />
                     <div className="flex justify-between text-sm font-bold text-slate-900">
-                      <span className="bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">$0</span>
-                      <span className="bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">${priceRange[1]}</span>
+                      <span className="bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">₦0</span>
+                      <span className="bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">₦{priceRange[1].toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -113,7 +113,7 @@ const Rooms: React.FC = () => {
                   </div>
                 </div>
 
-                <Button className="w-full bg-slate-900 h-14 rounded-2xl font-bold shadow-lg shadow-slate-900/10" onClick={() => { setSelectedTypes([]); setPriceRange([0, 1500]); setSearchQuery(''); }}>
+                <Button className="w-full bg-slate-900 h-14 rounded-2xl font-bold shadow-lg shadow-slate-900/10" onClick={() => { setSelectedTypes([]); setPriceRange([0, 500000]); setSearchQuery(''); }}>
                   Reset Filters
                 </Button>
               </CardContent>
@@ -173,7 +173,7 @@ const Rooms: React.FC = () => {
                                 </div>
                             </div>
                             <div className="text-right">
-                            <span className="block text-3xl font-bold text-slate-900">${room.price}</span>
+                            <span className="block text-3xl font-bold text-slate-900">₦{room.price.toLocaleString()}</span>
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Per Night</span>
                             </div>
                         </div>
@@ -207,7 +207,7 @@ const Rooms: React.FC = () => {
                 </div>
                 <h3 className="text-2xl font-serif text-slate-900">No matching residences found</h3>
                 <p className="text-slate-500 max-w-sm mx-auto">Try adjusting your filters or search terms to find the perfect stay.</p>
-                <Button variant="outline" className="rounded-xl h-12" onClick={() => { setSelectedTypes([]); setPriceRange([0, 1500]); setSearchQuery(''); }}>
+                <Button variant="outline" className="rounded-xl h-12" onClick={() => { setSelectedTypes([]); setPriceRange([0, 500000]); setSearchQuery(''); }}>
                     Clear All Filters
                 </Button>
               </div>

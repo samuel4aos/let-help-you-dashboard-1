@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { CheckCircle2, XCircle, Briefcase, Clock, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BookingList: React.FC = () => {
@@ -24,11 +24,11 @@ const BookingList: React.FC = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Booking ID</TableHead>
-              <TableHead>Room</TableHead>
-              <TableHead>Check-In</TableHead>
-              <TableHead>Check-Out</TableHead>
-              <TableHead>Total Price</TableHead>
+              <TableHead>Guest</TableHead>
+              <TableHead>Stay Details</TableHead>
+              <TableHead>Occupation</TableHead>
+              <TableHead>Arrival</TableHead>
+              <TableHead>Price</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -40,12 +40,36 @@ const BookingList: React.FC = () => {
                 </TableRow>
             ) : (
                 bookings.map((booking) => (
-                <TableRow key={booking.id}>
-                    <TableCell className="font-mono text-xs uppercase">#{booking.id}</TableCell>
-                    <TableCell className="font-medium">{booking.roomName}</TableCell>
-                    <TableCell>{booking.checkIn}</TableCell>
-                    <TableCell>{booking.checkOut}</TableCell>
-                    <TableCell className="font-bold text-slate-900">${booking.totalPrice}</TableCell>
+                <TableRow key={booking.id} className="hover:bg-slate-50/50 transition-colors">
+                    <TableCell>
+                        <div className="flex flex-col">
+                            <span className="font-bold text-slate-900">{booking.fullName || booking.guestName}</span>
+                            <span className="text-xs text-slate-500 flex items-center gap-1">
+                                <Mail className="w-3 h-3" /> {booking.guestEmail}
+                            </span>
+                        </div>
+                    </TableCell>
+                    <TableCell>
+                        <div className="flex flex-col">
+                            <span className="font-medium">{booking.roomName}</span>
+                            <span className="text-xs text-slate-500">
+                                {booking.checkIn} to {booking.checkOut}
+                            </span>
+                        </div>
+                    </TableCell>
+                    <TableCell>
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <Briefcase className="w-4 h-4 text-slate-400" />
+                            {booking.occupation || 'N/A'}
+                        </div>
+                    </TableCell>
+                    <TableCell>
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                            <Clock className="w-4 h-4 text-slate-400" />
+                            {booking.expectedArrivalTime || 'N/A'}
+                        </div>
+                    </TableCell>
+                    <TableCell className="font-bold text-slate-900">₦{booking.totalPrice.toLocaleString()}</TableCell>
                     <TableCell>
                     <Badge 
                         className={cn(
@@ -92,7 +116,6 @@ const BookingList: React.FC = () => {
   );
 };
 
-// Helper for classname concatenation if not imported
 const cn = (...classes: any[]) => classes.filter(Boolean).join(' ');
 
 export default BookingList;
