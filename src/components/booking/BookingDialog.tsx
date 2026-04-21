@@ -29,11 +29,6 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ room, isOpen, onClose }) 
   const totalPrice = nights * room.price;
 
   const handleBooking = () => {
-    if (!user) {
-      toast.error('Please login to book a room');
-      return;
-    }
-
     if (!date?.from || !date?.to || nights <= 0) {
       toast.error('Please select valid dates');
       return;
@@ -41,9 +36,11 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ room, isOpen, onClose }) 
 
     const newBooking: Booking = {
       id: Math.random().toString(36).substr(2, 9),
-      userId: user.id,
       roomId: room.id,
       roomName: room.name,
+      guestName: user?.name || 'Guest',
+      guestEmail: user?.email || 'guest@example.com',
+      guestPhone: '',
       checkIn: format(date.from, 'yyyy-MM-dd'),
       checkOut: format(date.to, 'yyyy-MM-dd'),
       totalPrice,

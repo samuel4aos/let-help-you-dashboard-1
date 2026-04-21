@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 const MyBookings: React.FC = () => {
   const { user, bookings } = useHotelStore();
   
-  const userBookings = bookings.filter(b => b.userId === user?.id);
+  const userBookings = bookings.filter(b => b.guestEmail === user?.email);
 
   if (!user) {
     return (

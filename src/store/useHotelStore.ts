@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { User, Room, Booking, HotelInfo, Staff } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface HotelState {
   user: User | null;
@@ -7,113 +8,166 @@ interface HotelState {
   bookings: Booking[];
   staff: Staff[];
   hotelInfo: HotelInfo;
+  isLoading: boolean;
   setUser: (user: User | null) => void;
-  addRoom: (room: Room) => void;
-  updateRoom: (id: string, room: Partial<Room>) => void;
-  deleteRoom: (id: string) => void;
-  addBooking: (booking: Booking) => void;
-  updateBooking: (id: string, booking: Partial<Booking>) => void;
-  deleteBooking: (id: string) => void;
-  addStaff: (staff: Staff) => void;
-  updateStaff: (id: string, staff: Partial<Staff>) => void;
-  deleteStaff: (id: string) => void;
-  updateHotelInfo: (info: Partial<HotelInfo>) => void;
+  fetchInitialData: () => Promise<void>;
+  addRoom: (room: Room) => Promise<void>;
+  updateRoom: (id: string, room: Partial<Room>) => Promise<void>;
+  deleteRoom: (id: string) => Promise<void>;
+  addBooking: (booking: Booking) => Promise<void>;
+  updateBooking: (id: string, booking: Partial<Booking>) => Promise<void>;
+  deleteBooking: (id: string) => Promise<void>;
+  addStaff: (staff: Staff) => Promise<void>;
+  updateStaff: (id: string, staff: Partial<Staff>) => Promise<void>;
+  deleteStaff: (id: string) => Promise<void>;
+  updateHotelInfo: (info: Partial<HotelInfo>) => Promise<void>;
 }
 
-export const useHotelStore = create<HotelState>((set) => ({
+export const useHotelStore = create<HotelState>((set, get) => ({
   user: null,
-  rooms: [
-    {
-      id: '1',
-      name: 'Royal Ocean Suite',
-      type: 'Suite',
-      price: 450,
-      capacity: 2,
-      description: 'Experience ultimate luxury with panoramic ocean views and bespoke amenities.',
-      images: ['https://storage.googleapis.com/dala-prod-public-storage/generated-images/87fdac91-6420-4b2c-9c11-c405f851854e/luxury-suite-3d280c52-1776794071152.webp'],
-      amenities: ['Ocean View', 'King Bed', 'Private Balcony', 'Mini Bar', 'Free WiFi'],
-      status: 'available',
-    },
-    {
-      id: '2',
-      name: 'Deluxe Garden Room',
-      type: 'Deluxe',
-      price: 280,
-      capacity: 2,
-      description: 'A serene sanctuary overlooking our lush botanical gardens.',
-      images: ['https://storage.googleapis.com/dala-prod-public-storage/generated-images/87fdac91-6420-4b2c-9c11-c405f851854e/standard-room-25b83b42-1776794070257.webp'],
-      amenities: ['Garden View', 'Queen Bed', 'Smart TV', 'Workspace'],
-      status: 'available',
-    },
-    {
-      id: '3',
-      name: 'Presidential Penthouse',
-      type: 'Presidential',
-      price: 1200,
-      capacity: 4,
-      description: 'The pinnacle of luxury living. A sprawling penthouse with 360-degree city views.',
-      images: ['https://storage.googleapis.com/dala-prod-public-storage/generated-images/87fdac91-6420-4b2c-9c11-c405f851854e/luxury-suite-3d280c52-1776794071152.webp'],
-      amenities: ['Private Pool', 'Butler Service', 'Home Theater', 'Kitchen'],
-      status: 'available',
-    }
-  ],
-  bookings: [
-    {
-      id: 'b1',
-      userId: '1',
-      roomId: '1',
-      roomName: 'Royal Ocean Suite',
-      checkIn: '2024-12-20',
-      checkOut: '2024-12-25',
-      totalPrice: 2250,
-      status: 'confirmed',
-      paymentStatus: 'paid',
-      createdAt: new Date().toISOString(),
-    }
-  ],
-  staff: [
-    { id: 's1', name: 'John Smith', role: 'General Manager', email: 'john@regency.com', status: 'active' },
-    { id: 's2', name: 'Sarah Wilson', role: 'Concierge', email: 'sarah@regency.com', status: 'active' },
-  ],
+  rooms: [],
+  bookings: [],
+  staff: [],
+  isLoading: false,
   hotelInfo: {
     name: 'The Grand Regency',
-    description: 'A sanctuary of elegance and modern luxury in the heart of the city.',
-    address: '123 Luxury Ave, Victoria Island, Lagos',
-    phone: '+234 800 REGENCY',
-    email: 'contact@grandregency.com',
-    images: ['https://storage.googleapis.com/dala-prod-public-storage/generated-images/87fdac91-6420-4b2c-9c11-c405f851854e/hotel-lobby-6673bcb5-1776794071145.webp'],
-    policies: ['Check-in: 2:00 PM', 'Check-out: 11:00 AM', 'No Smoking', 'No Pets'],
+    description: '',
+    address: '',
+    phone: '',
+    email: '',
+    images: [],
+    policies: [],
   },
+
   setUser: (user) => set({ user }),
-  addRoom: (room) => set((state) => ({ rooms: [...state.rooms, room] })),
-  updateRoom: (id, updatedRoom) =>
-    set((state) => ({
-      rooms: state.rooms.map((r) => (r.id === id ? { ...r, ...updatedRoom } : r)),
-    })),
-  deleteRoom: (id) =>
-    set((state) => ({
-      rooms: state.rooms.filter((r) => r.id !== id),
-    })),
-  addBooking: (booking) => set((state) => ({ bookings: [booking, ...state.bookings] })),
-  updateBooking: (id, updatedBooking) =>
-    set((state) => ({
-      bookings: state.bookings.map((b) => (b.id === id ? { ...b, ...updatedBooking } : b)),
-    })),
-  deleteBooking: (id) =>
-    set((state) => ({
-      bookings: state.bookings.filter((b) => b.id !== id),
-    })),
-  addStaff: (staff) => set((state) => ({ staff: [...state.staff, staff] })),
-  updateStaff: (id, updatedStaff) =>
+
+  fetchInitialData: async () => {
+    set({ isLoading: true });
+    try {
+      // Fetch Hotel Info
+      const { data: hotelData } = await supabase
+        .from('hotels')
+        .select('*')
+        .single();
+      
+      if (hotelData) {
+        set({ hotelInfo: hotelData });
+      }
+
+      // Fetch Rooms
+      const { data: roomsData } = await supabase
+        .from('rooms')
+        .select('*');
+      
+      if (roomsData) {
+        set({ rooms: roomsData });
+      }
+
+      // Fetch Bookings (if user is logged in)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile) {
+          set({ user: profile });
+          
+          const { data: bookingsData } = await supabase
+            .from('bookings')
+            .select('*, rooms(name)')
+            .eq('user_id', session.user.id);
+          
+          if (bookingsData) {
+            set({ bookings: bookingsData.map(b => ({
+              ...b,
+              roomName: b.rooms?.name
+            })) });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  addRoom: async (room) => {
+    const { data, error } = await supabase.from('rooms').insert([room]).select().single();
+    if (!error && data) {
+      set((state) => ({ rooms: [...state.rooms, data] }));
+    }
+  },
+
+  updateRoom: async (id, updatedRoom) => {
+    const { error } = await supabase.from('rooms').update(updatedRoom).eq('id', id);
+    if (!error) {
+      set((state) => ({
+        rooms: state.rooms.map((r) => (r.id === id ? { ...r, ...updatedRoom } : r)),
+      }));
+    }
+  },
+
+  deleteRoom: async (id) => {
+    const { error } = await supabase.from('rooms').delete().eq('id', id);
+    if (!error) {
+      set((state) => ({
+        rooms: state.rooms.filter((r) => r.id !== id),
+      }));
+    }
+  },
+
+  addBooking: async (booking) => {
+    const { data, error } = await supabase.from('bookings').insert([booking]).select().single();
+    if (!error && data) {
+      set((state) => ({ bookings: [data, ...state.bookings] }));
+    }
+  },
+
+  updateBooking: async (id, updatedBooking) => {
+    const { error } = await supabase.from('bookings').update(updatedBooking).eq('id', id);
+    if (!error) {
+      set((state) => ({
+        bookings: state.bookings.map((b) => (b.id === id ? { ...b, ...updatedBooking } : b)),
+      }));
+    }
+  },
+
+  deleteBooking: async (id) => {
+    const { error } = await supabase.from('bookings').delete().eq('id', id);
+    if (!error) {
+      set((state) => ({
+        bookings: state.bookings.filter((b) => b.id !== id),
+      }));
+    }
+  },
+
+  addStaff: async (staff) => {
+    // Note: Staff management involves creating auth users, which usually happens via edge functions
+    set((state) => ({ staff: [...state.staff, staff] }));
+  },
+
+  updateStaff: async (id, updatedStaff) => {
     set((state) => ({
       staff: state.staff.map((s) => (s.id === id ? { ...s, ...updatedStaff } : s)),
-    })),
-  deleteStaff: (id) =>
+    }));
+  },
+
+  deleteStaff: async (id) => {
     set((state) => ({
       staff: state.staff.filter((s) => s.id !== id),
-    })),
-  updateHotelInfo: (info) =>
-    set((state) => ({
-      hotelInfo: { ...state.hotelInfo, ...info },
-    })),
+    }));
+  },
+
+  updateHotelInfo: async (info) => {
+    const { error } = await supabase.from('hotels').update(info).eq('id', (get().hotelInfo as any).id);
+    if (!error) {
+      set((state) => ({
+        hotelInfo: { ...state.hotelInfo, ...info },
+      }));
+    }
+  },
 }));

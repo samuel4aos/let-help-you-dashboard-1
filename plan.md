@@ -1,47 +1,22 @@
-# Implementation Plan - Regency Hotel Management System
+# Fix Runtime Errors: userId Property on Booking Type
 
-Implement a production-ready UI/UX for the Regency Hotel, focusing on navigation, interactivity, and responsiveness.
+The application is experiencing TypeScript/Runtime errors because the `Booking` type no longer includes a `userId` property, but it is still being accessed and assigned in several components. This is part of the transition to a guest-booking flow where a logged-in user is not required.
 
-## 1. Core Infrastructure & State
-- [x] Review existing Zustand store (`useHotelStore.ts`)
-- [ ] Add `staff` to store state and management functions
-- [ ] Implement simulated "loading" states for better UX during "API" calls
+## Proposed Changes
 
-## 2. Authentication & Navigation
-- [ ] Enhance `src/pages/Auth.tsx` with validation and better mock logic
-- [ ] Update `src/App.tsx` with:
-    - Protected routes for Admin
-    - New route: `/profile` or `/my-bookings` for guests
-    - Refined navigation with active states
+### 1. `src/components/booking/BookingDialog.tsx`
+- Remove the requirement for a logged-in user before booking.
+- Remove the assignment of `userId` to the `newBooking` object.
+- Provide default values for required `Booking` properties (`guestName`, `guestEmail`, `guestPhone`) using `user` info if available.
 
-## 3. Guest Experience (Interactivity)
-- [ ] **Home Page (`Home.tsx`)**:
-    - Functional search bar (Check-in, Check-out, Guests) that navigates to `/rooms` with filters
-- [ ] **Rooms Page (`Rooms.tsx`)**:
-    - Implement real-time filtering (Price, Type, Amenities)
-    - Implement search functionality
-    - Integrated **Booking Dialog**: Modal to confirm dates and book
-- [ ] **My Bookings Page**:
-    - New page for guests to view their past and upcoming stays
+### 2. `src/pages/guest/MyBookings.tsx`
+- Remove the usage of `userId` when filtering bookings.
+- Update the filtering logic to use `guestEmail` (matched against the logged-in user's email) to show bookings relevant to the user.
+- If no user is logged in, show a state appropriate for guests (currently the page requires login, which we will preserve but fix the filtering logic).
 
-## 4. Admin Experience (Dashboard)
-- [ ] **Room Management**:
-    - Implement "Add Room" and "Edit Room" using Shadcn Dialogs
-    - Form validation for room details
-- [ ] **Booking Management**:
-    - Interactive table to view, confirm, or cancel guest bookings
-- [ ] **Staff Management**:
-    - Simple interface to list and manage hotel staff
-- [ ] **Hotel Settings**:
-    - Form to update hotel name, contact info, and policies
+### 3. Verification
+- Run `validate_build` to ensure all TypeScript errors are resolved and the application builds successfully.
 
-## 5. UI/UX Polishing
-- [ ] **Animations**: Add `framer-motion` page transitions and staggered list animations
-- [ ] **Feedback**: Use `sonner` for all success/error notifications
-- [ ] **Responsiveness**: Ensure 100% mobile-friendliness for all new components (Dialogs, Tables, Forms)
-- [ ] **Accessibility**: Add ARIA labels and keyboard navigation support
-
-## 6. Final Polish & Bug Fixes
-- [ ] Test all navigation flows
-- [ ] Validate form inputs
-- [ ] Ensure consistent color palette (Slate & Amber) across all components
+## Risks
+- If the database still requires `user_id`, the insertion might fail. However, the project context indicates a migration was applied to allow guest bookings.
+- The `Booking` interface requires `guestName`, `guestEmail`, and `guestPhone`. We must ensure these are provided when creating a booking.

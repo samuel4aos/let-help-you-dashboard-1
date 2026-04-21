@@ -7,37 +7,97 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { supabase } from '../lib/supabase';
 
 const Auth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const { setUser } = useHotelStore();
+  const [loading, setLoading] = useState(false);
+  const { setUser, fetchInitialData } = useHotelStore();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password || (!isLogin && !name)) {
       toast.error('Please fill in all fields');
       return;
     }
 
-    // Mock Login/Signup
-    const mockUser = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: isLogin ? email.split('@')[0] : name,
-      email: email,
-      role: (email.includes('admin') ? 'admin' : 'guest') as any,
-    };
+    setLoading(true);
+    try {
+      if (isLogin) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-    setUser(mockUser);
-    toast.success(`${isLogin ? 'Welcome back' : 'Account created'}, ${mockUser.name}!`);
-    
-    if (mockUser.role === 'admin') {
-      navigate('/admin');
-    } else {
-      navigate('/');
+        if (error) throw error;
+
+        // Fetch profile
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        setUser(profile);
+        await fetchInitialData();
+        toast.success(`Welcome back, ${profile.name}!`);
+        
+        if (profile.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/');
+        }
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: name,
+            },
+          },
+        });
+
+        if (error) throw error;
+
+        if (data.user) {
+          // Create profile
+          const { error: profileError } = await supabase.from('profiles').insert([
+            {
+              id: data.user.id,
+              name: name,
+              email: email,
+              role: 'guest',
+            },
+          ]);
+
+          if (profileError) throw profileError;
+
+          toast.success('Account created successfully! You can now sign in.');
+          setIsLogin(true);
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred during authentication');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      toast.error(error.message);
     }
   };
 
@@ -51,7 +111,7 @@ const Auth: React.FC = () => {
         <Card className="border-none shadow-3xl rounded-[2.5rem] overflow-hidden bg-white">
           <div className="bg-slate-900 p-10 text-center text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full -mr-16 -mt-16" />
-            <div className="bg-amber-500 w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-amber-500/20">
+            <div className="bg-amber-500 w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-amber-500/20 active:scale-95 transition-transform">
               <Hotel className="text-slate-900 w-8 h-8" />
             </div>
             <h2 className="text-3xl font-serif font-bold tracking-tight">The Grand Regency</h2>
@@ -76,6 +136,7 @@ const Auth: React.FC = () => {
                       placeholder="Full Name" 
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -89,6 +150,7 @@ const Auth: React.FC = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -101,18 +163,22 @@ const Auth: React.FC = () => {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
                   />
                 </div>
               </div>
               
               {isLogin && (
                 <div className="text-right">
-                  <button type="button" className="text-sm text-amber-600 font-bold hover:underline">Forgot Password?</button>
+                  <Button variant="link" type="button" className="text-sm text-amber-600 font-bold hover:text-amber-700 p-0 h-auto">Forgot Password?</Button>
                 </div>
               )}
 
-              <Button className="w-full h-14 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold group shadow-lg shadow-slate-900/10 text-lg">
-                {isLogin ? 'Sign In' : 'Create Account'} <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-2" />
+              <Button 
+                className="w-full h-14 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold group shadow-lg shadow-slate-900/10 text-lg"
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')} {!loading && <ArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-2" />}
               </Button>
 
               <div className="relative my-8">
@@ -121,7 +187,12 @@ const Auth: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" className="h-14 rounded-2xl border-slate-100 hover:bg-slate-50 font-bold">
+                <Button 
+                  variant="outline" 
+                  className="h-14 rounded-2xl border-slate-100 hover:bg-slate-50 font-bold"
+                  onClick={handleGoogleSignIn}
+                  type="button"
+                >
                   <svg className="mr-3 h-5 w-5" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -130,7 +201,7 @@ const Auth: React.FC = () => {
                   </svg>
                   Google
                 </Button>
-                <Button variant="outline" className="h-14 rounded-2xl border-slate-100 hover:bg-slate-50 font-bold">
+                <Button variant="outline" className="h-14 rounded-2xl border-slate-100 hover:bg-slate-50 font-bold" type="button">
                   <Github className="mr-3 h-5 w-5" /> Github
                 </Button>
               </div>
@@ -138,12 +209,13 @@ const Auth: React.FC = () => {
             
             <div className="mt-10 text-center text-sm">
               <span className="text-slate-500 font-medium">{isLogin ? "New to Regency?" : "Already a member?"}</span>
-              <button 
+              <Button 
+                variant="link"
                 onClick={() => setIsLogin(!isLogin)}
-                className="ml-2 text-amber-600 font-bold hover:underline underline-offset-4"
+                className="ml-1 text-amber-600 font-bold hover:text-amber-700 p-0 h-auto underline-offset-4 hover:underline"
               >
                 {isLogin ? 'Begin Your Journey' : 'Sign In To Account'}
-              </button>
+              </Button>
             </div>
           </CardContent>
         </Card>

@@ -22,15 +22,17 @@ export interface Room {
 
 export interface Booking {
   id: string;
-  userId: string;
   roomId: string;
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
   checkIn: string;
   checkOut: string;
   totalPrice: number;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   paymentStatus: 'pending' | 'paid' | 'failed';
   createdAt: string;
-  roomName?: string; // For display purposes
+  roomName?: string;
 }
 
 export interface Staff {
