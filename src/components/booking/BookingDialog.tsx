@@ -19,7 +19,7 @@ interface BookingDialogProps {
 }
 
 const BookingDialog: React.FC<BookingDialogProps> = ({ room, isOpen, onClose }) => {
-  const { user, addBooking } = useHotelStore();
+  const { user, addBooking, hotelInfo } = useHotelStore();
   const [date, setDate] = useState<{ from: Date; to: Date } | undefined>({
     from: new Date(),
     to: addDays(new Date(), 2),
@@ -123,7 +123,7 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ room, isOpen, onClose }) 
       return;
     }
 
-    if (!/\\S+@\\S+\\.\\S+/.test(formData.email)) {
+    if (!/\\\\S+@\\\\S+\\\\.\\\\S+/.test(formData.email)) {
       toast.error('Please enter a valid email address');
       return;
     }
@@ -137,7 +137,7 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ room, isOpen, onClose }) 
         <DialogHeader>
           <DialogTitle className="text-2xl font-serif">Complete Your Reservation</DialogTitle>
           <DialogDescription>
-            {room.name} • ₦{room.price.toLocaleString()} per night
+            {room.name} \u2022 \u20a6{room.price.toLocaleString()} per night
           </DialogDescription>
         </DialogHeader>
 
@@ -249,22 +249,22 @@ const BookingDialog: React.FC<BookingDialogProps> = ({ room, isOpen, onClose }) 
 
           <div className="bg-slate-900 rounded-2xl p-6 text-white space-y-4">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-400">₦{room.price.toLocaleString()} x {nights} nights</span>
-              <span className="font-bold">₦{totalPrice.toLocaleString()}</span>
+              <span className="text-slate-400">\u20a6{room.price.toLocaleString()} x {nights} nights</span>
+              <span className="font-bold">\u20a6{totalPrice.toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-slate-400">Taxes & Fees</span>
-              <span className="font-bold">₦0</span>
+              <span className="font-bold">\u20a60</span>
             </div>
             <div className="pt-4 border-t border-slate-700 flex justify-between items-center">
               <span className="text-lg font-bold">Total</span>
-              <span className="text-2xl font-bold text-amber-400">₦{totalPrice.toLocaleString()}</span>
+              <span className="text-2xl font-bold text-amber-400">\u20a6{totalPrice.toLocaleString()}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-3 text-xs text-slate-500 bg-amber-50 p-3 rounded-xl border border-amber-100">
             <ShieldCheck className="w-5 h-5 text-amber-600" />
-            <p>Secure payment via Paystack. Your booking is protected by our Regency Guarantee.</p>
+            <p>Secure payment via Paystack. Your booking is protected by our {hotelInfo.name} Guarantee.</p>
           </div>
         </div>
 

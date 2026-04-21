@@ -7,7 +7,7 @@ import { Calendar, MapPin, Phone, Clock, CreditCard, ChevronRight } from 'lucide
 import { motion } from 'framer-motion';
 
 const MyBookings: React.FC = () => {
-  const { user, bookings } = useHotelStore();
+  const { user, bookings, hotelInfo } = useHotelStore();
   
   const userBookings = bookings.filter(b => b.guestEmail === user?.email);
 
@@ -41,7 +41,7 @@ const MyBookings: React.FC = () => {
               <Calendar className="w-10 h-10 text-slate-300" />
             </div>
             <h3 className="text-2xl font-serif text-slate-900 mb-2">No bookings yet</h3>
-            <p className="text-slate-500 mb-8 max-w-sm mx-auto">Your journey with Regency hasn't started yet. Browse our rooms and book your first stay.</p>
+            <p className="text-slate-500 mb-8 max-w-sm mx-auto">Your journey with {hotelInfo.name} hasn't started yet. Browse our rooms and book your first stay.</p>
             <Button onClick={() => window.location.href = '/rooms'} className="bg-slate-900 rounded-xl px-8 h-12">Explore Rooms</Button>
           </div>
         ) : (
@@ -90,7 +90,7 @@ const MyBookings: React.FC = () => {
                               <span className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
                                 <CreditCard className="w-3 h-3" /> Total Paid
                               </span>
-                              <p className="font-bold text-slate-900">${booking.totalPrice}</p>
+                              <p className="font-bold text-slate-900">₦{booking.totalPrice.toLocaleString()}</p>
                             </div>
                           </div>
                         </div>
@@ -105,13 +105,13 @@ const MyBookings: React.FC = () => {
 
                       <div className="mt-8 pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="flex items-center gap-2 text-sm text-slate-500">
-                          <MapPin className="w-4 h-4 text-amber-500" /> 123 Luxury Ave, Victoria Island
+                          <MapPin className="w-4 h-4 text-amber-500" /> {hotelInfo.address}
                         </div>
                         <div className="flex items-center gap-2 text-sm text-slate-500">
-                          <Phone className="w-4 h-4 text-amber-500" /> +234 800 REGENCY
+                          <Phone className="w-4 h-4 text-amber-500" /> {hotelInfo.phone}
                         </div>
                         <div className="flex items-center gap-2 text-sm text-slate-500">
-                          <Clock className="w-4 h-4 text-amber-500" /> Check-in: 2:00 PM
+                          <Clock className="w-4 h-4 text-amber-500" /> {hotelInfo.policies.find(p => p.toLowerCase().includes('check-in')) || 'Check-in: 2:00 PM'}
                         </div>
                       </div>
                     </CardContent>

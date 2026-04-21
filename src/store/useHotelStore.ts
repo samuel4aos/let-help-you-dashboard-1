@@ -7,6 +7,7 @@ interface HotelState {
   user: User | null;
   rooms: Room[];
   bookings: Booking[];
+  staff: User[];
   hotelInfo: HotelInfo;
   isLoading: boolean;
   setUser: (user: User | null) => void;
@@ -61,6 +62,7 @@ export const useHotelStore = create<HotelState>((set, get) => ({
   user: null,
   rooms: [],
   bookings: [],
+  staff: [],
   isLoading: false,
   hotelInfo: {
     name: 'The Grand Regency',
@@ -128,6 +130,16 @@ export const useHotelStore = create<HotelState>((set, get) => ({
       const { data: bookingsData } = await query;
       if (bookingsData) {
         set({ bookings: bookingsData.map(mapBookingFromDB) });
+      }
+
+      // Fetch staff (profiles with role admin or staff)
+      const { data: staffData } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('role', ['admin', 'staff']);
+      
+      if (staffData) {
+        set({ staff: staffData });
       }
     } catch (error) {
       console.error('Error fetching data:', error);

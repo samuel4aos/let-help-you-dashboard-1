@@ -1,4 +1,4 @@
-export type UserRole = 'guest' | 'admin';
+export type UserRole = 'guest' | 'admin' | 'staff';
 
 export interface User {
   id: string;
@@ -6,6 +6,7 @@ export interface User {
   email: string;
   role: UserRole;
   avatar?: string;
+  status?: 'active' | 'inactive';
 }
 
 export interface Room {

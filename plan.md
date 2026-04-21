@@ -1,23 +1,53 @@
-1. Remove Staff Module:
-   - Delete `src/components/admin/StaffList.tsx` (already done).
-   - Remove `Staff` interface from `src/types/index.ts`.
-   - Remove staff state and methods from `src/store/useHotelStore.ts`.
-   - Remove "Staff" tab and all references to `StaffList` in `src/pages/admin/Dashboard.tsx`.
+## UI/UX Audit Plan
 
-2. Implement Password-Only Admin Auth:
-   - Update `src/types/index.ts` to include `adminPassword` in `HotelInfo`.
-   - Update `src/store/useHotelStore.ts` to include `adminPassword` (defaulting to 'admin123') in the `hotelInfo` state and ensure it's saved/fetched from Supabase.
-   - Refactor `src/pages/Auth.tsx` to be a clean, password-only login screen.
-   - Implement login logic in `Auth.tsx` that checks the entered password against `hotelInfo.adminPassword`.
-   - On successful login, set the user in the store and redirect to `/admin`.
+This plan outlines the steps to conduct a comprehensive UI/UX audit of the application.
 
-3. Add Password Change Feature:
-   - Update `src/components/admin/HotelSettings.tsx` to include a "Security" tab.
-   - In the "Security" tab, add a form to change the admin password.
-   - The form should require the "Current Password", "New Password", and "Confirm New Password".
-   - Implement the `updateAdminPassword` logic (which will just be a call to `updateHotelInfo`).
+**Phase 1: Initial Assessment & Baseline**
+1.  **Preflight Check:** Perform a preflight check to get the current sandbox state and file listing. (Completed)
+2.  **Read Plan:** Read the existing plan.md to understand the project context. (Skipped as this is the initial audit plan creation)
 
-4. Cleanup:
-   - Remove unused imports and icons across affected files.
-   - Ensure all references to Supabase Auth are replaced with our custom admin auth where appropriate (guest auth can remain if it uses Supabase, but the prompt focuses on the admin).
-   - Update `App.tsx` logout logic to handle the local user state correctly.
+**Phase 2: UI/UX Audit**
+1.  **Review Guest-Facing Pages:**
+    *   Home (`src/pages/guest/Home.tsx`)
+    *   Rooms (`src/pages/guest/Rooms.tsx`)
+    *   My Bookings (`src/pages/guest/MyBookings.tsx`)
+    *   **Focus:** Visual consistency, layout responsiveness, clarity of information, ease of navigation, aesthetic appeal, and animation smoothness.
+2.  **Review Admin Pages:**
+    *   Admin Dashboard (`src/pages/admin/Dashboard.tsx`)
+    *   Hotel Settings (`src/components/admin/HotelSettings.tsx`)
+    *   **Focus:** Usability, clarity of data presentation, efficiency of workflows, form interactions, and responsiveness.
+3.  **Test Interactive Elements:**
+    *   Buttons (`src/components/ui/button.tsx` and custom implementations) - check states, transitions, and click feedback.
+    *   Forms (within `src/components/booking/BookingDialog.tsx`) - check layout, validation feedback, and user flow.
+    *   Image Uploader (`src/components/admin/ImageUploader.tsx`) - check drag-and-drop functionality, preview accuracy, progress indicators, and error handling.
+    *   Navigation (Navbar, Footer, Admin links) - check consistency, responsiveness, and clarity.
+4.  **Responsiveness Check:** Test across various viewport sizes (mobile, tablet, desktop) for all pages and components.
+5.  **Animation & Transition Review:** Assess the smoothness and appropriateness of all animations and transitions. Ensure they enhance the user experience without being distracting.
+
+**Phase 3: Documentation & Recommendations**
+1.  **Document Findings:** Create a detailed report categorizing issues by:
+    *   Visual Inconsistencies (e.g., color, spacing, typography)
+    *   Bugs (e.g., broken interactions, incorrect display)
+    *   Usability Issues (e.g., confusing navigation, unclear calls to action)
+    *   Responsiveness Problems (e.g., overlapping elements, unreadable text)
+    *   Animation/Transition Issues (e.g., jank, jarring effects)
+2.  **Propose Technical Solutions:** For each documented issue, provide specific, actionable recommendations for code-level fixes. This may include:
+    *   CSS/Tailwind adjustments.
+    *   Component prop modifications.
+    *   State management logic refinements.
+    *   Accessibility improvements.
+    *   Potential refactoring of components or logic.
+
+**Phase 4: Verification**
+1.  **Summarize Report:** Consolidate the audit findings and recommendations into a final report.
+2.  **Validate Build:** (To be performed after any proposed fixes are implemented) Ensure all changes are validated.
+
+**Note:** This phase focuses on *auditing* and *documenting*. No code modifications will be made in this iteration. The output will be a report of findings and proposed solutions.
+
+**Current State:**
+- The application has implemented core features for hotel management, admin dashboard, guest bookings, and Supabase integration.
+- Styling is based on Tailwind CSS and Shadcn/UI, with specific attention to interactive elements.
+- Dependencies include React 19.1.1, Vite, Supabase SDK, etc.
+
+**Assigned Agent:** Architect (for planning and coordination)
+**Next Steps:** Execute the UI/UX audit steps.

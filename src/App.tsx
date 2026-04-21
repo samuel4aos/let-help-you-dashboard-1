@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useHotelStore } from './store/useHotelStore';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Hotel, Menu, X, Instagram, Facebook, Twitter, Mail, Phone, MapPin, LogOut, ChevronRight } from 'lucide-react';
 import Home from './pages/guest/Home';
 import Rooms from './pages/guest/Rooms';
@@ -14,7 +14,7 @@ import { supabase } from './lib/supabase';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = React.useState(false);
-  const { user, setUser } = useHotelStore();
+  const { user, setUser, hotelInfo } = useHotelStore();
   const location = useLocation();
   const navigate = useNavigate();
   const isAdminPage = location.pathname.startsWith('/admin');
@@ -33,6 +33,8 @@ const Navbar = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const logoText = hotelInfo.name.split(' ').pop()?.toUpperCase() || 'HOTEL';
+
   return (
     <nav className="fixed w-full z-50 bg-white/70 backdrop-blur-xl border-b border-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -41,7 +43,7 @@ const Navbar = () => {
             <div className="bg-slate-900 p-2.5 rounded-2xl group-hover:bg-amber-500 transition-all shadow-lg shadow-slate-900/10 active:scale-95">
               <Hotel className="w-6 h-6 text-white group-hover:text-slate-900 transition-colors" />
             </div>
-            <span className="font-serif text-3xl font-bold tracking-tighter text-slate-900">REGENCY</span>
+            <span className="font-serif text-3xl font-bold tracking-tighter text-slate-900">{logoText}</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -127,9 +129,12 @@ const Navbar = () => {
 
 const Footer = () => {
   const location = useLocation();
+  const { hotelInfo } = useHotelStore();
   const isAdminPage = location.pathname.startsWith('/admin');
 
   if (isAdminPage) return null;
+
+  const logoText = hotelInfo.name.split(' ').pop()?.toUpperCase() || 'HOTEL';
 
   return (
     <footer className="bg-slate-900 text-slate-400 py-32 px-4 relative overflow-hidden">
@@ -140,10 +145,10 @@ const Footer = () => {
             <div className="bg-amber-500 p-2.5 rounded-2xl active:scale-95 transition-transform">
               <Hotel className="w-6 h-6 text-slate-900" />
             </div>
-            <span className="font-serif text-3xl font-bold tracking-tighter text-white">REGENCY</span>
+            <span className="font-serif text-3xl font-bold tracking-tighter text-white">{logoText}</span>
           </div>
           <p className="text-slate-400 text-lg leading-relaxed max-w-xs">
-            Experience the definitive standard of luxury and world-class hospitality in the heart of the city. 
+            {hotelInfo.description}
           </p>
           <div className="flex gap-5">
             {[Instagram, Facebook, Twitter].map((Icon, i) => (
@@ -180,21 +185,21 @@ const Footer = () => {
           <div className="space-y-6">
             <div className="flex items-start gap-4">
                 <MapPin className="w-6 h-6 text-amber-500 shrink-0" />
-                <span className="text-sm leading-relaxed">123 Luxury Ave, Victoria Island, Lagos, Nigeria</span>
+                <span className="text-sm leading-relaxed">{hotelInfo.address}</span>
             </div>
             <div className="flex items-center gap-4 group cursor-pointer">
                 <Phone className="w-6 h-6 text-amber-500 shrink-0 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-bold group-hover:text-amber-400 transition-colors">+234 800 REGENCY</span>
+                <span className="text-sm font-bold group-hover:text-amber-400 transition-colors">{hotelInfo.phone}</span>
             </div>
             <div className="flex items-center gap-4 group cursor-pointer">
                 <Mail className="w-6 h-6 text-amber-500 shrink-0 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-bold group-hover:text-amber-400 transition-colors">concierge@regency.com</span>
+                <span className="text-sm font-bold group-hover:text-amber-400 transition-colors">{hotelInfo.email}</span>
             </div>
           </div>
         </div>
       </div>
       <div className="max-w-7xl mx-auto mt-32 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
-        <p>&copy; {new Date().getFullYear()} The Grand Regency Victoria Island.</p>
+        <p>&copy; {new Date().getFullYear()} {hotelInfo.name}.</p>
         <div className="flex gap-8">
             <a href="#" className="hover:text-white transition-colors">Legal</a>
             <a href="#" className="hover:text-white transition-colors">Cookies</a>
@@ -203,6 +208,17 @@ const Footer = () => {
       </div>
     </footer>
   );
+};
+
+const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useHotelStore();
+  const location = useLocation();
+
+  if (!user || user.role !== 'admin') {
+    return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
 };
 
 function App() {
@@ -221,7 +237,14 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/rooms" element={<Rooms />} />
             <Route path="/my-bookings" element={<MyBookings />} />
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route 
+              path="/admin" 
+              element={
+                <AdminProtectedRoute>
+                  <AdminDashboard />
+                </AdminProtectedRoute>
+              } 
+            />
             <Route path="/auth" element={<Auth />} />
             </Routes>
         </main>

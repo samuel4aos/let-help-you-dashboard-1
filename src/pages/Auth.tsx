@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useHotelStore } from '../store/useHotelStore';
 import { Hotel, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -13,6 +13,9 @@ const Auth: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { hotelInfo, setUser } = useHotelStore();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = (location.state as any)?.from?.pathname || '/admin';
 
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,11 +32,11 @@ const Auth: React.FC = () => {
         setUser({
           id: 'admin',
           name: 'Administrator',
-          email: 'admin@regency.com',
+          email: 'admin@hotel.com',
           role: 'admin'
         });
-        toast.success('Access Granted. Welcome back, Admin.');
-        navigate('/admin');
+        toast.success('Access Granted. Welcome back, General Manager.');
+        navigate(from, { replace: true });
       } else {
         toast.error('Invalid administrative password');
       }
@@ -54,18 +57,18 @@ const Auth: React.FC = () => {
             <div className="bg-amber-500 w-16 h-16 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-amber-500/20 active:scale-95 transition-transform">
               <ShieldCheck className="text-slate-900 w-8 h-8" />
             </div>
-            <h2 className="text-3xl font-serif font-bold tracking-tight">Admin Portal</h2>
-            <p className="text-slate-400 text-sm mt-2 font-medium">Secure access for property management</p>
+            <h2 className="text-3xl font-serif font-bold tracking-tight">Management Access</h2>
+            <p className="text-slate-400 text-sm mt-2 font-medium">Secure portal for the General Manager</p>
           </div>
           
           <CardHeader className="pt-10 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
                 <Hotel className="w-4 h-4 text-amber-600" />
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">The Grand Regency</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">{hotelInfo.name}</span>
             </div>
             <CardTitle className="text-3xl font-serif">Access Verification</CardTitle>
             <CardDescription className="text-slate-500 text-base mt-2 font-medium">
-              Enter your administrative password to continue to the dashboard.
+              Enter the administrative password to manage property operations.
             </CardDescription>
           </CardHeader>
 
@@ -101,7 +104,7 @@ const Auth: React.FC = () => {
         </Card>
 
         <p className="text-center mt-8 text-slate-400 text-xs font-medium">
-            If you've lost your access credentials, please contact the system administrator.
+            Authorized personnel only. All access attempts are logged.
         </p>
       </motion.div>
     </div>

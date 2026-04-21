@@ -12,9 +12,10 @@ import BookingList from '@/components/admin/BookingList';
 import HotelSettings from '@/components/admin/HotelSettings';
 import { Room } from '@/types';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 
 const AdminDashboard: React.FC = () => {
-  const { rooms, bookings, deleteRoom, setUser } = useHotelStore();
+  const { rooms, bookings, deleteRoom, setUser, hotelInfo } = useHotelStore();
   const [activeTab, setActiveTab] = useState<'overview' | 'rooms' | 'bookings' | 'settings'>('overview');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isRoomDialogOpen, setIsRoomDialogOpen] = useState(false);
@@ -27,12 +28,26 @@ const AdminDashboard: React.FC = () => {
     navigate('/auth');
   };
 
+  const totalRooms = rooms.length;
+  const bookedRooms = rooms.filter(r => r.status === 'booked').length;
+  const occupancyRate = totalRooms > 0 ? Math.round((bookedRooms / totalRooms) * 100) : 0;
+  const totalRevenue = bookings.reduce((acc, b) => acc + b.totalPrice, 0);
+
   const stats = [
-    { title: 'Total Bookings', value: bookings.length + 12, icon: CalendarCheck, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { title: 'Total Revenue', value: `₦${(bookings.reduce((acc, b) => acc + b.totalPrice, 0) + 12450).toLocaleString()}`, icon: DollarSign, color: 'text-green-600', bg: 'bg-green-50' },
-    { title: 'Occupancy Rate', value: '78%', icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { title: 'Available Rooms', value: rooms.length, icon: BedDouble, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { title: 'Total Bookings', value: bookings.length, icon: CalendarCheck, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { title: 'Total Revenue', value: `\u20a6${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-green-600', bg: 'bg-green-50' },
+    { title: 'Occupancy Rate', value: `${occupancyRate}%`, icon: TrendingUp, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { title: 'Available Rooms', value: rooms.filter(r => r.status === 'available').length, icon: BedDouble, color: 'text-amber-600', bg: 'bg-amber-50' },
   ];
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   const renderOverview = () => (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -71,22 +86,26 @@ const AdminDashboard: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {[
-                  { id: 1, guest: 'John Doe', room: 'Royal Suite', dates: 'Oct 12 - 15', status: 'confirmed' },
-                  { id: 2, guest: 'Sarah Smith', room: 'Deluxe Room', dates: 'Oct 14 - 16', status: 'pending' },
-                  { id: 3, guest: 'Mike Johnson', room: 'Garden Suite', dates: 'Oct 15 - 20', status: 'confirmed' },
-                ].map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.guest}</TableCell>
-                    <TableCell>{item.room}</TableCell>
-                    <TableCell>{item.dates}</TableCell>
-                    <TableCell>
-                      <Badge variant={item.status === 'confirmed' ? 'default' : 'secondary'} className="rounded-lg px-2">
-                        {item.status}
-                      </Badge>
+                {bookings.length > 0 ? (
+                  bookings.slice(0, 5).map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.guestName}</TableCell>
+                      <TableCell>{item.roomName || 'Unknown Room'}</TableCell>
+                      <TableCell>{format(new Date(item.checkIn), 'MMM d')} - {format(new Date(item.checkOut), 'MMM d')}</TableCell>
+                      <TableCell>
+                        <Badge variant={item.status === 'confirmed' ? 'default' : 'secondary'} className="rounded-lg px-2">
+                          {item.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-10 text-slate-400 font-medium">
+                      No recent bookings found.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -140,7 +159,7 @@ const AdminDashboard: React.FC = () => {
               </div>
               <p className="text-slate-500 text-sm mb-4 line-clamp-2">{room.description}</p>
               <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                <span className="font-bold text-amber-600 text-lg">₦{room.price.toLocaleString()}<span className="text-slate-400 text-xs font-normal">/night</span></span>
+                <span className="font-bold text-amber-600 text-lg">\u20a6{room.price.toLocaleString()}<span className="text-slate-400 text-xs font-normal">/night</span></span>
                 <div className="flex gap-2">
                   <Button 
                     variant="ghost" 
@@ -179,7 +198,7 @@ const AdminDashboard: React.FC = () => {
             <div className="bg-amber-500 p-2.5 rounded-2xl shadow-lg shadow-amber-500/20">
               <Hotel className="w-7 h-7 text-slate-900" />
             </div>
-            <h1 className="font-serif text-2xl font-bold tracking-tight">REGENCY</h1>
+            <h1 className="font-serif text-2xl font-bold tracking-tight">{hotelInfo.name.split(' ').pop()?.toUpperCase()}</h1>
           </div>
 
           <nav className="space-y-2">
@@ -218,8 +237,8 @@ const AdminDashboard: React.FC = () => {
               <Menu className="w-5 h-5" />
             </Button>
             <div>
-              <p className="text-xs font-bold text-amber-600 uppercase tracking-widest">Admin Dashboard</p>
-              <h2 className="text-2xl font-bold capitalize text-slate-800">{activeTab === 'overview' ? 'Welcome Back, Admin' : activeTab === 'settings' ? 'Management Suite' : activeTab}</h2>
+              <p className="text-xs font-bold text-amber-600 uppercase tracking-widest">Management Suite</p>
+              <h2 className="text-2xl font-bold capitalize text-slate-800">{activeTab === 'overview' ? 'General Manager' : activeTab === 'settings' ? 'Management Suite' : activeTab}</h2>
             </div>
           </div>
           <div className="flex items-center gap-6">
@@ -229,11 +248,11 @@ const AdminDashboard: React.FC = () => {
             </Button>
             <div className="flex items-center gap-4 pl-6 border-l border-slate-100">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-slate-900">Victoria Regency</p>
+                <p className="text-sm font-bold text-slate-900">{hotelInfo.name}</p>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">General Manager</p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-amber-500 font-bold text-lg shadow-lg">
-                VR
+                {getInitials(hotelInfo.name)}
               </div>
             </div>
           </div>
